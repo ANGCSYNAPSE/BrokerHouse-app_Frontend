@@ -48,9 +48,12 @@ lib/
       data/                    repository + models
       application/             Riverpod controller + state
       presentation/            screens
-    home/                      ✅ placeholder post-login screen
-    users/ subscriptions/ payments/ projects/ builder_projects/
-    builder_onboarding/ leads/ builder_leads/ site_visits/ bookings/
+    home/                      ✅ bottom-nav shell (MainShell) + Home tab
+    projects/                  ✅ Explore tab (property grid — mock data)
+    leads/                     ✅ Leads tab (status-tabbed pipeline — mock data)
+    users/                     ✅ Profile tab (real logout, rest is mock data)
+    subscriptions/ payments/ builder_projects/
+    builder_onboarding/ builder_leads/ site_visits/ bookings/
     earnings/ referrals/ notifications/ customer/ b2b/ crm/ admin/
     verification_center/       📋 scaffolded folders, each with a README
                                 mapping it to its backend module — ready for
@@ -61,22 +64,37 @@ lib/
 
 The `auth` module is fully wired end-to-end against the live backend (send-otp → verify-otp → JWT issued → `/api/auth/me` → home) as a working reference implementation for the rest of the app.
 
-## Known environment issue — Android builds
+## Known environment issue — Android builds (Windows dev machine)
 
 Building/running on Android currently fails with:
 ```
 java.io.IOException: Unable to establish loopback connection
 ```
-This is a **machine-level bug**, not a code or Flutter issue — Java's `Pipe`/`Selector` implementation can't establish its internal AF_UNIX loopback socket on this Windows install, which blocks every Gradle invocation (confirmed independently of Flutter/React Native, with a minimal Java reproduction). The fix (needs to be run once, as Administrator):
+This is a **machine-level bug**, not a code or Flutter issue — Java's `Pipe`/`Selector` implementation can't establish its internal AF_UNIX loopback socket on this Windows install, which blocks every Gradle invocation (confirmed independently of Flutter/React Native, with a minimal Java reproduction). `netsh winsock reset` + reboot — the standard fix for this class of error — did **not** resolve it, so the working plan is to run the Android/Gradle build step inside **WSL2** instead (a real Linux environment sidesteps the bug entirely; the emulator itself still runs on Windows). See project notes for current status.
 
-```powershell
-netsh winsock reset
+## iOS — build & test on the Mac
+
+The project is fully scaffolded for iOS (`ios/` directory, bundle ID `com.brokerhouse.brokerhouseApp`) and kept in sync with every screen as it's built — nothing iOS-specific needs to be written separately. To build/test on the Mac:
+
+```bash
+# 1. Clone the repo
+git clone https://github.com/ANGCSYNAPSE/BrokerHouse-app_Frontend.git
+cd BrokerHouse-app_Frontend
+
+# 2. Install Flutter (if not already) — https://docs.flutter.dev/get-started/install/macos
+flutter doctor -v   # make sure Xcode + CocoaPods show a checkmark
+
+# 3. Get packages and install iOS pods
+flutter pub get
+cd ios && pod install && cd ..
+
+# 4. Run on the iOS Simulator (or a plugged-in iPhone)
+flutter run
 ```
-...then **reboot**. Once that's done, `flutter run` (with an emulator running, e.g. `emulator -avd Pixel_8`) or `flutter build apk` should work normally.
 
-## iOS
+The backend API needs to be reachable from the Mac too — either run `BrokerHouse_Backend` on the Mac itself, or point the app at wherever it's running via `flutter run --dart-define=API_BASE_URL=http://<windows-machine-LAN-IP>:5000/api` (the default `localhost` only works when frontend and backend run on the same machine).
 
-iOS builds require Xcode, which only runs on macOS — not available on this Windows machine. The project is fully scaffolded for iOS (`ios/` directory, bundle ID `com.brokerhouse.brokerhouseApp`); building/testing/signing for TestFlight and the App Store will need a Mac (physical, a cloud Mac service like Codemagic/Ionic Appflow, or a CI macOS runner).
+Whenever new screens are added on the Windows side, `git pull` on the Mac picks them up immediately — same source, no port required.
 
 ## Testing
 
