@@ -5,7 +5,7 @@ import '../../features/auth/application/auth_controller.dart';
 import '../../features/auth/application/auth_state.dart';
 import '../../features/auth/presentation/otp_verify_screen.dart';
 import '../../features/auth/presentation/phone_entry_screen.dart';
-import '../../features/home/presentation/home_screen.dart';
+import '../../features/home/presentation/main_shell.dart';
 import '../widgets/splash_screen.dart';
 
 /// Rebuilt whenever auth status changes (rare — only on login/logout
@@ -33,7 +33,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/splash', builder: (context, state) => const SplashScreen()),
       GoRoute(path: '/login', builder: (context, state) => const PhoneEntryScreen()),
       GoRoute(path: '/otp', builder: (context, state) => const OtpVerifyScreen()),
-      GoRoute(path: '/home', builder: (context, state) => const HomeScreen()),
+      GoRoute(path: '/home', builder: (context, state) => const MainShell()),
     ],
   );
 });
