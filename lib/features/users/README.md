@@ -1,0 +1,7 @@
+# users
+
+Maps to backend module: `/api/users — profile setup, KYC, bank details`
+
+Not yet built — waiting on Figma screens for this module. Follow the same
+structure as `features/auth`: `data/` (repository + models),
+`application/` (Riverpod controllers/state), `presentation/` (screens/widgets).

@@ -1,0 +1,7 @@
+# projects
+
+Maps to backend module: `/api/projects — listing, search, favorites, share, brochure`
+
+Not yet built — waiting on Figma screens for this module. Follow the same
+structure as `features/auth`: `data/` (repository + models),
+`application/` (Riverpod controllers/state), `presentation/` (screens/widgets).

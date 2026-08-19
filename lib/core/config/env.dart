@@ -1,0 +1,32 @@
+import 'dart:io' show Platform;
+
+import 'package:flutter/foundation.dart' show kIsWeb;
+
+/// Central place for environment-dependent config. The API base URL is
+/// resolved automatically per platform so `flutter run` "just works" against
+/// the local backend without any manual editing:
+///  - Android emulator can't reach the host via `localhost` — it must use
+///    the special `10.0.2.2` alias instead.
+///  - iOS simulator and desktop/web can use `localhost` directly.
+///  - A physical device needs your machine's LAN IP, or (for production)
+///    the real deployed API URL — override with `--dart-define=API_BASE_URL=...`.
+class Env {
+  Env._();
+
+  static const _override = String.fromEnvironment('API_BASE_URL');
+
+  static const _devPort = 5000;
+
+  static String get apiBaseUrl {
+    if (_override.isNotEmpty) return _override;
+
+    if (kIsWeb) return 'http://localhost:$_devPort/api';
+
+    if (Platform.isAndroid) return 'http://10.0.2.2:$_devPort/api';
+
+    // iOS simulator, desktop, etc.
+    return 'http://localhost:$_devPort/api';
+  }
+
+  static const isProduction = bool.fromEnvironment('dart.vm.product');
+}
