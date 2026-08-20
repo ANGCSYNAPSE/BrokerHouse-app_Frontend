@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/brand_logo.dart';
 import '../application/auth_controller.dart';
 
 class PhoneEntryScreen extends ConsumerStatefulWidget {
@@ -55,22 +56,59 @@ class _PhoneEntryScreenState extends ConsumerState<PhoneEntryScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.navy,
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            AspectRatio(
-              aspectRatio: 402 / 240,
-              child: SvgPicture.asset('assets/login-banner.svg', fit: BoxFit.cover),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          AspectRatio(
+            aspectRatio: 402 / 240,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                Image.asset('assets/login-hero-photo.png', fit: BoxFit.cover),
+                Container(color: AppColors.navy.withValues(alpha: 0.85)),
+                SafeArea(
+                  bottom: false,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const BrandLogo(width: 150),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Connect. Transact. Earn.',
+                              style: GoogleFonts.playfairDisplay(
+                                color: AppColors.white,
+                                fontSize: 26,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              'Unlock direct access to top-tier builders & maximum commissions.',
+                              style: TextStyle(color: AppColors.slate.withValues(alpha: 0.9), fontSize: 13),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
-            Container(
+          ),
+          Expanded(
+            child: Container(
               decoration: const BoxDecoration(
                 color: AppColors.white,
                 borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
               ),
               child: SafeArea(
                 top: false,
-                child: Padding(
+                child: SingleChildScrollView(
                   padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -170,7 +208,7 @@ class _PhoneEntryScreenState extends ConsumerState<PhoneEntryScreen> {
                         children: [
                           const Text('New to Broker House? ', style: TextStyle(color: AppColors.textSecondary)),
                           GestureDetector(
-                            onTap: () {},
+                            onTap: _isSubmitting ? null : _submit,
                             child: const Text('Sign Up', style: TextStyle(color: AppColors.gold, fontWeight: FontWeight.w600)),
                           ),
                         ],
@@ -180,8 +218,8 @@ class _PhoneEntryScreenState extends ConsumerState<PhoneEntryScreen> {
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
