@@ -34,6 +34,9 @@ dependencies:
   image_picker: ^1.1.2
   logger: ^2.5.0
   pretty_dio_logger: ^1.4.0
+  flutter_svg: ^2.0.14
+  pin_code_fields: ^8.0.1
+  google_fonts: ^6.2.1
 
 dev_dependencies:
   flutter_test:
@@ -45,5 +48,20 @@ dev_dependencies:
   freezed: ^2.5.7
   json_serializable: ^6.9.0
 
+  # App icon generation — see tool/README or run:
+  # dart run flutter_launcher_icons
+  flutter_launcher_icons: ^0.14.3
+
 flutter:
   uses-material-design: true
+  assets:
+    - assets/
+    - assets/icon/
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/icon/app_icon_ios.png"
+  adaptive_icon_background: "#0A1628"
+  adaptive_icon_foreground: "assets/icon/app_icon_adaptive_fg.png"
+  remove_alpha_ios: true

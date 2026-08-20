@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../core/network/api_exception.dart';
+import '../../../core/theme/app_theme.dart';
 import '../application/auth_controller.dart';
 
 class PhoneEntryScreen extends ConsumerStatefulWidget {
@@ -12,89 +14,173 @@ class PhoneEntryScreen extends ConsumerStatefulWidget {
 }
 
 class _PhoneEntryScreenState extends ConsumerState<PhoneEntryScreen> {
-  final _formKey = GlobalKey<FormState>();
   final _phoneController = TextEditingController();
-  final _countryCodeController = TextEditingController(text: '+91');
+  final _countryCode = '+91';
   bool _isSubmitting = false;
+
+  bool get _isPhoneValid => RegExp(r'^\d{10}$').hasMatch(_phoneController.text.trim());
+
+  @override
+  void initState() {
+    super.initState();
+    _phoneController.addListener(() => setState(() {}));
+  }
 
   @override
   void dispose() {
     _phoneController.dispose();
-    _countryCodeController.dispose();
     super.dispose();
   }
 
   Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_isPhoneValid) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Enter a valid 10-digit mobile number')));
+      return;
+    }
     setState(() => _isSubmitting = true);
     try {
-      await ref.read(authControllerProvider.notifier).sendOtp(
-            phone: _phoneController.text.trim(),
-            countryCode: _countryCodeController.text.trim(),
-          );
+      await ref.read(authControllerProvider.notifier).sendOtp(phone: _phoneController.text.trim(), countryCode: _countryCode);
     } on ApiException catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.description)));
-      }
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.description)));
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
   }
 
+  void _socialComingSoon(String provider) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$provider sign-in is coming soon')));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text('BrokrsHouse', style: Theme.of(context).textTheme.headlineMedium, textAlign: TextAlign.center),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Enter your mobile number to continue',
-                    style: Theme.of(context).textTheme.bodyMedium,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 32),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+      backgroundColor: AppColors.navy,
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            AspectRatio(
+              aspectRatio: 402 / 240,
+              child: SvgPicture.asset('assets/login-banner.svg', fit: BoxFit.cover),
+            ),
+            Container(
+              decoration: const BoxDecoration(
+                color: AppColors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              child: SafeArea(
+                top: false,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      SizedBox(
-                        width: 80,
-                        child: TextFormField(
-                          controller: _countryCodeController,
-                          decoration: const InputDecoration(labelText: 'Code'),
-                          validator: (v) => (v == null || !RegExp(r'^\+\d{1,4}$').hasMatch(v)) ? 'e.g. +91' : null,
-                        ),
+                      const Text(
+                        'Enter your mobile number to begin',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: TextFormField(
-                          controller: _phoneController,
-                          keyboardType: TextInputType.phone,
-                          decoration: const InputDecoration(labelText: 'Mobile number'),
-                          validator: (v) => (v == null || v.trim().length < 6) ? 'Enter a valid number' : null,
-                        ),
+                      const SizedBox(height: 16),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            height: 52,
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: AppColors.border),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            alignment: Alignment.center,
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text('🇮🇳', style: TextStyle(fontSize: 18)),
+                                SizedBox(width: 6),
+                                Text('+91', style: TextStyle(fontWeight: FontWeight.w600)),
+                                Icon(Icons.keyboard_arrow_down, size: 18, color: AppColors.textMuted),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: SizedBox(
+                              height: 52,
+                              child: TextField(
+                                controller: _phoneController,
+                                keyboardType: TextInputType.phone,
+                                maxLength: 10,
+                                style: const TextStyle(fontWeight: FontWeight.w600),
+                                decoration: InputDecoration(
+                                  counterText: '',
+                                  hintText: '98765 43210',
+                                  suffixIcon: _isPhoneValid
+                                      ? const Icon(Icons.check_circle, color: AppColors.success)
+                                      : null,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                      ElevatedButton(
+                        onPressed: _isSubmitting ? null : _submit,
+                        child: _isSubmitting
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.navy),
+                              )
+                            : const Text('Continue with OTP'),
+                      ),
+                      const SizedBox(height: 20),
+                      const Row(
+                        children: [
+                          Expanded(child: Divider()),
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 12),
+                            child: Text('OR SIGN IN WITH', style: TextStyle(fontSize: 11, color: AppColors.textMuted, letterSpacing: 0.5)),
+                          ),
+                          Expanded(child: Divider()),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: () => _socialComingSoon('Google'),
+                              icon: const Text('G', style: TextStyle(fontWeight: FontWeight.bold)),
+                              label: const Text('Google'),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: () => _socialComingSoon('Apple'),
+                              icon: const Icon(Icons.apple, size: 18),
+                              label: const Text('Apple'),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Text('New to Broker House? ', style: TextStyle(color: AppColors.textSecondary)),
+                          GestureDetector(
+                            onTap: () {},
+                            child: const Text('Sign Up', style: TextStyle(color: AppColors.gold, fontWeight: FontWeight.w600)),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                  const SizedBox(height: 24),
-                  ElevatedButton(
-                    onPressed: _isSubmitting ? null : _submit,
-                    child: _isSubmitting
-                        ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                        : const Text('Send OTP'),
-                  ),
-                ],
+                ),
               ),
             ),
-          ),
+          ],
         ),
       ),
     );

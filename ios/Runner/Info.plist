@@ -7,7 +7,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>BrokrsHouse</string>
+	<string>Broker House</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -29,9 +29,9 @@
 	<!-- Required by image_picker (profile photo, KYC document uploads) — iOS
 	     kills the app on first use of the camera/photo library without these. -->
 	<key>NSCameraUsageDescription</key>
-	<string>BrokrsHouse needs camera access so you can take a profile photo or scan a KYC document.</string>
+	<string>Broker House needs camera access so you can take a profile photo or scan a KYC document.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>BrokrsHouse needs photo library access so you can choose a profile photo or upload a KYC document.</string>
+	<string>Broker House needs photo library access so you can choose a profile photo or upload a KYC document.</string>
 	<!-- Dev-only: allows plain HTTP to localhost so the iOS simulator can
 	     reach the local backend during development. Remove/restrict this
 	     before shipping — production should talk to an HTTPS API only. -->

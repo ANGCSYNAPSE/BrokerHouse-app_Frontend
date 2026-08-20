@@ -1,7 +1,12 @@
+import 'dart:async';
+
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:pin_code_fields/pin_code_fields.dart';
 
 import '../../../core/network/api_exception.dart';
+import '../../../core/theme/app_theme.dart';
 import '../application/auth_controller.dart';
 
 class OtpVerifyScreen extends ConsumerStatefulWidget {
@@ -12,26 +17,45 @@ class OtpVerifyScreen extends ConsumerStatefulWidget {
 }
 
 class _OtpVerifyScreenState extends ConsumerState<OtpVerifyScreen> {
-  final _formKey = GlobalKey<FormState>();
   final _otpController = TextEditingController();
   bool _isSubmitting = false;
   bool _isResending = false;
+  Timer? _timer;
+  int _secondsLeft = 30;
+
+  @override
+  void initState() {
+    super.initState();
+    _startTimer();
+  }
+
+  void _startTimer() {
+    _timer?.cancel();
+    setState(() => _secondsLeft = 30);
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_secondsLeft <= 1) {
+        timer.cancel();
+        setState(() => _secondsLeft = 0);
+      } else {
+        setState(() => _secondsLeft--);
+      }
+    });
+  }
 
   @override
   void dispose() {
+    _timer?.cancel();
     _otpController.dispose();
     super.dispose();
   }
 
-  Future<void> _verify() async {
-    if (!_formKey.currentState!.validate()) return;
+  Future<void> _verify(String code) async {
+    if (code.length < 4) return;
     setState(() => _isSubmitting = true);
     try {
-      await ref.read(authControllerProvider.notifier).verifyOtp(_otpController.text.trim());
+      await ref.read(authControllerProvider.notifier).verifyOtp(code);
     } on ApiException catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.description)));
-      }
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.description)));
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
@@ -41,17 +65,16 @@ class _OtpVerifyScreenState extends ConsumerState<OtpVerifyScreen> {
     setState(() => _isResending = true);
     try {
       await ref.read(authControllerProvider.notifier).resendOtp();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('OTP resent')));
-      }
+      _startTimer();
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('OTP resent')));
     } on ApiException catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.description)));
-      }
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.description)));
     } finally {
       if (mounted) setState(() => _isResending = false);
     }
   }
+
+  String get _timerLabel => '00:${_secondsLeft.toString().padLeft(2, '0')}';
 
   @override
   Widget build(BuildContext context) {
@@ -59,50 +82,99 @@ class _OtpVerifyScreenState extends ConsumerState<OtpVerifyScreen> {
     final phoneLabel = '${authState.pendingCountryCode ?? ''} ${authState.pendingPhone ?? ''}';
 
     return Scaffold(
+      backgroundColor: AppColors.white,
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => ref.read(authControllerProvider.notifier).backToPhoneEntry(),
+        leading: const SizedBox.shrink(),
+        leadingWidth: 0,
+        titleSpacing: 24,
+        title: InkWell(
+          onTap: () => ref.read(authControllerProvider.notifier).backToPhoneEntry(),
+          child: const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.arrow_back, size: 18, color: AppColors.textPrimary),
+              SizedBox(width: 8),
+              Text('Back to Login', style: TextStyle(fontSize: 15, color: AppColors.textPrimary, fontWeight: FontWeight.w500)),
+            ],
+          ),
         ),
       ),
       body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const SizedBox(height: 48),
+              const Text('Verification Code', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+              const SizedBox(height: 8),
+              RichText(
+                text: TextSpan(
+                  style: const TextStyle(fontSize: 14, color: AppColors.textSecondary),
+                  children: [
+                    TextSpan(text: 'We sent a 6-digit OTP to $phoneLabel '),
+                    TextSpan(
+                      text: 'Edit Number',
+                      style: const TextStyle(color: AppColors.gold, fontWeight: FontWeight.w600),
+                      recognizer: TapGestureRecognizer()
+                        ..onTap = () => ref.read(authControllerProvider.notifier).backToPhoneEntry(),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 32),
+              PinCodeTextField(
+                appContext: context,
+                length: 6,
+                controller: _otpController,
+                keyboardType: TextInputType.number,
+                autoFocus: true,
+                animationType: AnimationType.none,
+                pinTheme: PinTheme(
+                  shape: PinCodeFieldShape.box,
+                  borderRadius: BorderRadius.circular(10),
+                  fieldHeight: 48,
+                  fieldWidth: 44,
+                  activeColor: AppColors.gold,
+                  selectedColor: AppColors.gold,
+                  inactiveColor: AppColors.border,
+                  activeFillColor: AppColors.white,
+                  selectedFillColor: AppColors.white,
+                  inactiveFillColor: AppColors.white,
+                ),
+                enableActiveFill: true,
+                onChanged: (_) {},
+                onCompleted: _verify,
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: _isSubmitting ? null : () => _verify(_otpController.text),
+                child: _isSubmitting
+                    ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.navy))
+                    : const Text('Verify OTP'),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('Enter OTP', style: Theme.of(context).textTheme.headlineMedium, textAlign: TextAlign.center),
-                  const SizedBox(height: 8),
-                  Text('Code sent to $phoneLabel', style: Theme.of(context).textTheme.bodyMedium, textAlign: TextAlign.center),
-                  const SizedBox(height: 32),
-                  TextFormField(
-                    controller: _otpController,
-                    keyboardType: TextInputType.number,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 24, letterSpacing: 8),
-                    decoration: const InputDecoration(counterText: ''),
-                    maxLength: 6,
-                    validator: (v) => (v == null || v.trim().length < 4) ? 'Enter the OTP' : null,
-                  ),
-                  const SizedBox(height: 24),
-                  ElevatedButton(
-                    onPressed: _isSubmitting ? null : _verify,
-                    child: _isSubmitting
-                        ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                        : const Text('Verify'),
-                  ),
-                  const SizedBox(height: 16),
-                  TextButton(
-                    onPressed: _isResending ? null : _resend,
-                    child: Text(_isResending ? 'Resending…' : 'Resend OTP'),
-                  ),
+                  const Text("Didn't receive code?", style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+                  if (_secondsLeft > 0)
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.timer_outlined, size: 14, color: AppColors.textMuted),
+                        const SizedBox(width: 4),
+                        Text('Resend in $_timerLabel', style: const TextStyle(color: AppColors.gold, fontSize: 13, fontWeight: FontWeight.w600)),
+                      ],
+                    )
+                  else
+                    TextButton(
+                      onPressed: _isResending ? null : _resend,
+                      child: Text(_isResending ? 'Resending…' : 'Resend OTP'),
+                    ),
                 ],
               ),
-            ),
+            ],
           ),
         ),
       ),

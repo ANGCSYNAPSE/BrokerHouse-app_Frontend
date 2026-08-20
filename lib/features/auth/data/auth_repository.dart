@@ -3,9 +3,27 @@ import '../../../core/network/token_storage.dart';
 import 'user_model.dart';
 
 class VerifyOtpResult {
-  const VerifyOtpResult({required this.user, required this.isNewUser});
+  const VerifyOtpResult({
+    required this.user,
+    required this.isNewUser,
+    required this.profileComplete,
+    required this.subscriptionActive,
+  });
+
   final UserModel user;
   final bool isNewUser;
+
+  /// Drives post-login routing: false → profile setup, else → home
+  /// (subscription-gated roles also check [subscriptionActive]).
+  final bool profileComplete;
+  final bool subscriptionActive;
+}
+
+class MeResult {
+  const MeResult({required this.user, required this.profileComplete, required this.subscriptionActive});
+  final UserModel user;
+  final bool profileComplete;
+  final bool subscriptionActive;
 }
 
 /// Talks to `/api/auth/*` — mirrors the backend's auth.routes.ts 1:1.
@@ -35,6 +53,8 @@ class AuthRepository {
     return VerifyOtpResult(
       user: UserModel.fromJson(data['user'] as Map<String, dynamic>),
       isNewUser: data['isNewUser'] as bool? ?? false,
+      profileComplete: data['profileComplete'] as bool? ?? false,
+      subscriptionActive: data['subscriptionActive'] as bool? ?? true,
     );
   }
 
@@ -46,12 +66,18 @@ class AuthRepository {
     return VerifyOtpResult(
       user: UserModel.fromJson(data['user'] as Map<String, dynamic>),
       isNewUser: data['isNewUser'] as bool? ?? false,
+      profileComplete: data['profileComplete'] as bool? ?? false,
+      subscriptionActive: data['subscriptionActive'] as bool? ?? true,
     );
   }
 
-  Future<UserModel> me() async {
+  Future<MeResult> me() async {
     final data = await _client.unwrap<Map<String, dynamic>>(() => _client.dio.get('/auth/me'));
-    return UserModel.fromJson(data['user'] as Map<String, dynamic>);
+    return MeResult(
+      user: UserModel.fromJson(data['user'] as Map<String, dynamic>),
+      profileComplete: data['profileComplete'] as bool? ?? false,
+      subscriptionActive: data['subscriptionActive'] as bool? ?? true,
+    );
   }
 
   Future<void> logout() async {
