@@ -26,6 +26,21 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<!-- Google Sign-In (iOS): REPLACE the CFBundleURLSchemes value below with
+	     your iOS OAuth client's "reversed client ID" — from Google Cloud
+	     Console, create an iOS OAuth client registered with this app's
+	     Bundle ID, then reverse its client ID
+	     (123-abc.apps.googleusercontent.com -> com.googleusercontent.apps.123-abc).
+	     Sign-in will fail with this placeholder still in place. -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.REPLACE_WITH_IOS_CLIENT_ID</string>
+			</array>
+		</dict>
+	</array>
 	<!-- Required by image_picker (profile photo, KYC document uploads) — iOS
 	     kills the app on first use of the camera/photo library without these. -->
 	<key>NSCameraUsageDescription</key>

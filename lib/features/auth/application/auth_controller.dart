@@ -137,6 +137,21 @@ class AuthController extends Notifier<AuthState> {
     return result.isNewUser;
   }
 
+  /// Returns whether this was a first-ever login for the Google/Apple
+  /// account, same as [verifyOtp] — the caller shows the same toast either
+  /// way. `idToken` comes from [SocialAuthService]; the backend verifies it
+  /// server-side (see socialAuth.ts) — this call carries no OTP.
+  Future<bool> socialLogin({required String provider, required String idToken}) async {
+    final result = await _repo.socialLogin(provider: provider, token: idToken);
+    state = state.copyWith(
+      status: AuthStatus.authenticated,
+      user: result.user,
+      profileComplete: result.profileComplete,
+      subscriptionActive: result.subscriptionActive,
+    );
+    return result.isNewUser;
+  }
+
   /// Called after `/api/users/profile` succeeds, so the router immediately
   /// moves on from profile-setup without waiting for another `/auth/me` call.
   void markProfileComplete() {

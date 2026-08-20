@@ -28,6 +28,15 @@ class Env {
     return 'http://localhost:$_devPort/api';
   }
 
+  // Social sign-in — public client identifiers (not secrets), but real
+  // values from Google Cloud Console / Apple Developer are required before
+  // either button will actually work. Override with
+  // --dart-define=GOOGLE_SERVER_CLIENT_ID=..., etc. See auth.routes.ts and
+  // .env.example on the backend for what each ID is and where to get it.
+  static const googleServerClientId = String.fromEnvironment('GOOGLE_SERVER_CLIENT_ID');
+  static const appleServiceId = String.fromEnvironment('APPLE_SERVICE_ID');
+  static const appleRedirectUri = String.fromEnvironment('APPLE_REDIRECT_URI');
+
   static const isProduction = bool.fromEnvironment('dart.vm.product');
 
   /// Dev convenience: send-otp/signup/resend calls swallow network errors
