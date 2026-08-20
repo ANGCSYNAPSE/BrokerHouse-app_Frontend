@@ -30,13 +30,12 @@ class Env {
 
   static const isProduction = bool.fromEnvironment('dart.vm.product');
 
-  /// TEMPORARY dev convenience while screens are being built ahead of full
-  /// API wiring — accepts "1234" as a valid OTP without calling the backend.
-  /// Tied to `!isProduction`, which is a compile-time constant derived from
-  /// `dart.vm.product` — a real `flutter build --release` (the only thing
-  /// that can ship to the Play Store/App Store) always compiles this to
-  /// `false`, so there's no way for this bypass to ship. Remove entirely
-  /// once real OTP wiring is confirmed working end-to-end on every screen.
+  /// Dev convenience: send-otp/signup/resend calls swallow network errors
+  /// instead of throwing, so screen flow can be reviewed even with the
+  /// backend unreachable. OTP *verification* always hits the real API
+  /// regardless of this flag — there is no client-side OTP bypass. Tied to
+  /// `!isProduction`, a compile-time constant derived from
+  /// `dart.vm.product`, so a real `flutter build --release` always compiles
+  /// this to `false`.
   static const useMockAuth = !isProduction;
-  static const mockOtp = '1234';
 }

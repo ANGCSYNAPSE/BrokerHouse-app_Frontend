@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/config/env.dart';
 import '../data/auth_providers.dart';
 import '../data/auth_repository.dart';
-import '../data/user_model.dart';
 import 'auth_state.dart';
 
 final authControllerProvider = NotifierProvider<AuthController, AuthState>(AuthController.new);
@@ -107,30 +106,9 @@ class AuthController extends Notifier<AuthState> {
 
   /// Returns whether this was a first-ever verified login for the
   /// phone/email — the OTP screen uses it to show "Successfully
-  /// registered!" vs "Welcome back!".
+  /// registered!" vs "Welcome back!". Always hits the real backend — there
+  /// is no client-side OTP bypass.
   Future<bool> verifyOtp(String otp) async {
-    // TEMPORARY (see Env.useMockAuth doc comment): "1234" always succeeds
-    // without a real backend round-trip, so screens are reviewable without
-    // digging a real OTP out of server logs. Stripped from release builds.
-    // There's no real backend response to read isNewUser from here, so it
-    // always reports true — good enough for a dev-only UI shortcut.
-    if (Env.useMockAuth && otp == Env.mockOtp) {
-      state = state.copyWith(
-        status: AuthStatus.authenticated,
-        user: UserModel(
-          id: 'mock-user',
-          phone: state.pendingPhone,
-          countryCode: state.pendingCountryCode,
-          email: state.pendingEmail,
-          role: 'BROKER',
-          isVerified: true,
-        ),
-        profileComplete: false,
-        subscriptionActive: true,
-      );
-      return true;
-    }
-
     if (state.pendingOtpMethod == PendingOtpMethod.email) {
       final email = state.pendingEmail;
       if (email == null) throw StateError('No email pending verification');

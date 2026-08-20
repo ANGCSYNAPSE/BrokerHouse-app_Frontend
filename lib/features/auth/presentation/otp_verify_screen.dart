@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
 
-import '../../../core/config/env.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_theme.dart';
 import '../application/auth_controller.dart';
@@ -19,7 +18,7 @@ class OtpVerifyScreen extends ConsumerStatefulWidget {
 }
 
 class _OtpVerifyScreenState extends ConsumerState<OtpVerifyScreen> {
-  final _otpController = TextEditingController(text: Env.useMockAuth ? Env.mockOtp : null);
+  final _otpController = TextEditingController();
   bool _isSubmitting = false;
   bool _isResending = false;
   Timer? _timer;
@@ -52,7 +51,7 @@ class _OtpVerifyScreenState extends ConsumerState<OtpVerifyScreen> {
   }
 
   Future<void> _verify(String code) async {
-    if (code.length < 4) return;
+    if (code.length < 6) return;
     setState(() => _isSubmitting = true);
     try {
       final isNewUser = await ref.read(authControllerProvider.notifier).verifyOtp(code);
@@ -120,7 +119,7 @@ class _OtpVerifyScreenState extends ConsumerState<OtpVerifyScreen> {
                 text: TextSpan(
                   style: const TextStyle(fontSize: 14, color: AppColors.textSecondary),
                   children: [
-                    TextSpan(text: 'We sent a 4-digit OTP to $destinationLabel '),
+                    TextSpan(text: 'We sent a 6-digit OTP to $destinationLabel '),
                     TextSpan(
                       text: isEmail ? 'Edit Email' : 'Edit Number',
                       style: const TextStyle(color: AppColors.gold, fontWeight: FontWeight.w600),
@@ -133,7 +132,7 @@ class _OtpVerifyScreenState extends ConsumerState<OtpVerifyScreen> {
               const SizedBox(height: 32),
               PinCodeTextField(
                 appContext: context,
-                length: 4,
+                length: 6,
                 controller: _otpController,
                 keyboardType: TextInputType.number,
                 autoFocus: true,
@@ -141,8 +140,8 @@ class _OtpVerifyScreenState extends ConsumerState<OtpVerifyScreen> {
                 pinTheme: PinTheme(
                   shape: PinCodeFieldShape.box,
                   borderRadius: BorderRadius.circular(10),
-                  fieldHeight: 52,
-                  fieldWidth: 52,
+                  fieldHeight: 48,
+                  fieldWidth: 44,
                   activeColor: AppColors.gold,
                   selectedColor: AppColors.gold,
                   inactiveColor: AppColors.border,

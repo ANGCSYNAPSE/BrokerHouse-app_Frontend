@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/config/env.dart';
 import '../../auth/application/auth_controller.dart';
 import '../data/users_providers.dart';
 
@@ -32,13 +31,6 @@ class ProfileSetupController extends AsyncNotifier<void> {
   }) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
-      // TEMPORARY (see Env.useMockAuth): mock-session users have no real
-      // backend record to save against — just advance the flow locally.
-      if (Env.useMockAuth && ref.read(authControllerProvider).user?.id == 'mock-user') {
-        ref.read(authControllerProvider.notifier).markProfileComplete();
-        return;
-      }
-
       final repo = ref.read(usersRepositoryProvider);
       await repo.completeProfile(
         fullName: fullName,
