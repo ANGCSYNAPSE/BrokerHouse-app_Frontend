@@ -33,6 +33,24 @@ class AuthRepository {
   final ApiClient _client;
   final TokenStorage _tokenStorage;
 
+  /// `POST /api/auth/signup` — attaches the email to the phone number's
+  /// account and sends the phone OTP that finishes verification via the
+  /// existing [verifyOtp]. No password — an already-registered phone just
+  /// falls through to a normal login, exactly like the login screen.
+  Future<void> signup({
+    required String phone,
+    required String countryCode,
+    required String email,
+  }) {
+    return _client.unwrapMessage(
+      () => _client.dio.post('/auth/signup', data: {
+        'phone': phone,
+        'countryCode': countryCode,
+        'email': email,
+      }),
+    );
+  }
+
   Future<void> sendOtp({required String phone, required String countryCode}) {
     return _client.unwrapMessage(
       () => _client.dio.post('/auth/send-otp', data: {'phone': phone, 'countryCode': countryCode}),
@@ -48,6 +66,27 @@ class AuthRepository {
   Future<VerifyOtpResult> verifyOtp({required String phone, required String countryCode, required String otp}) async {
     final data = await _client.unwrap<Map<String, dynamic>>(
       () => _client.dio.post('/auth/verify-otp', data: {'phone': phone, 'countryCode': countryCode, 'otp': otp}),
+    );
+    await _tokenStorage.saveTokens(accessToken: data['accessToken'] as String, refreshToken: data['refreshToken'] as String);
+    return VerifyOtpResult(
+      user: UserModel.fromJson(data['user'] as Map<String, dynamic>),
+      isNewUser: data['isNewUser'] as bool? ?? false,
+      profileComplete: data['profileComplete'] as bool? ?? false,
+      subscriptionActive: data['subscriptionActive'] as bool? ?? true,
+    );
+  }
+
+  /// `POST /api/auth/email/send-otp` — email login, a separate OTP
+  /// namespace from phone. The account must already exist (404 otherwise).
+  Future<void> sendEmailOtp({required String email}) {
+    return _client.unwrapMessage(
+      () => _client.dio.post('/auth/email/send-otp', data: {'email': email}),
+    );
+  }
+
+  Future<VerifyOtpResult> verifyEmailOtp({required String email, required String otp}) async {
+    final data = await _client.unwrap<Map<String, dynamic>>(
+      () => _client.dio.post('/auth/email/verify-otp', data: {'email': email, 'otp': otp}),
     );
     await _tokenStorage.saveTokens(accessToken: data['accessToken'] as String, refreshToken: data['refreshToken'] as String);
     return VerifyOtpResult(

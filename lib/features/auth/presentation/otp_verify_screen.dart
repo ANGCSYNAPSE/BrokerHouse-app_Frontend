@@ -9,6 +9,7 @@ import '../../../core/config/env.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_theme.dart';
 import '../application/auth_controller.dart';
+import '../application/auth_state.dart';
 
 class OtpVerifyScreen extends ConsumerStatefulWidget {
   const OtpVerifyScreen({super.key});
@@ -54,7 +55,12 @@ class _OtpVerifyScreenState extends ConsumerState<OtpVerifyScreen> {
     if (code.length < 4) return;
     setState(() => _isSubmitting = true);
     try {
-      await ref.read(authControllerProvider.notifier).verifyOtp(code);
+      final isNewUser = await ref.read(authControllerProvider.notifier).verifyOtp(code);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(isNewUser ? 'Successfully registered!' : 'Welcome back!')),
+        );
+      }
     } on ApiException catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.description)));
     } finally {
@@ -80,7 +86,8 @@ class _OtpVerifyScreenState extends ConsumerState<OtpVerifyScreen> {
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authControllerProvider);
-    final phoneLabel = '${authState.pendingCountryCode ?? ''} ${authState.pendingPhone ?? ''}';
+    final isEmail = authState.pendingOtpMethod == PendingOtpMethod.email;
+    final destinationLabel = isEmail ? (authState.pendingEmail ?? '') : '${authState.pendingCountryCode ?? ''} ${authState.pendingPhone ?? ''}';
 
     return Scaffold(
       backgroundColor: AppColors.white,
@@ -113,9 +120,9 @@ class _OtpVerifyScreenState extends ConsumerState<OtpVerifyScreen> {
                 text: TextSpan(
                   style: const TextStyle(fontSize: 14, color: AppColors.textSecondary),
                   children: [
-                    TextSpan(text: 'We sent a 4-digit OTP to $phoneLabel '),
+                    TextSpan(text: 'We sent a 4-digit OTP to $destinationLabel '),
                     TextSpan(
-                      text: 'Edit Number',
+                      text: isEmail ? 'Edit Email' : 'Edit Number',
                       style: const TextStyle(color: AppColors.gold, fontWeight: FontWeight.w600),
                       recognizer: TapGestureRecognizer()
                         ..onTap = () => ref.read(authControllerProvider.notifier).backToPhoneEntry(),
